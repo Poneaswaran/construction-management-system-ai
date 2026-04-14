@@ -16,7 +16,7 @@ def chunk_text(text):
     current_chunk = ""
 
     for section in sections:
-        if len(current_chunk) + len(section) < 500:
+        if len(current_chunk) + len(section) < 300:
             current_chunk += section + "\n\n"
         else:
             chunks.append(current_chunk.strip())
@@ -41,3 +41,25 @@ def ingest_pdf(file_path):
     )
 
     return len(chunks)
+
+
+def ingest_pdf_with_metadata(file_path, extra_metadata: dict):
+    """Ingest a PDF and tag every chunk with extra_metadata (e.g. {'location': 'chennai'})."""
+    text = load_pdf(file_path)
+    chunks = chunk_text(text)
+
+    # Use a namespace prefix derived from the file path to avoid ID collisions
+    import hashlib
+    ns = hashlib.md5(file_path.encode()).hexdigest()[:8]
+    ids = [f"{ns}_chunk_{i}" for i in range(len(chunks))]
+
+    metadatas = [{**{"source": file_path}, **extra_metadata} for _ in chunks]
+
+    # Upsert so re-ingesting on restart doesn't duplicate
+    collection.upsert(
+        documents=chunks,
+        ids=ids,
+        metadatas=metadatas
+    )
+
+    return len(chunks)
