@@ -9,3 +9,4 @@ onnxruntime==1.24.3
 pandas==3.0.1
 pypdf==6.9.1
 python-multipart==0.0.22
+python-dotenv
